@@ -6,7 +6,13 @@ const log4js = require('log4js');
 log4js.configure({
   appenders: {
     out: { type: 'stdout' },
-    app: { type: 'file', filename: 'application.log' }
+    app: {
+      type: 'file',
+      filename: 'application.log',
+      maxLogSize: 10485760,
+      backups: 10,
+      compress: true
+    }
   },
   categories: {
     default: { appenders: [ 'out', 'app' ], level: 'debug' }
