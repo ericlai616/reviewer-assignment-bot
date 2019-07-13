@@ -36,6 +36,7 @@ const GIT_HUB_APP = new App({
 const JWT = GIT_HUB_APP.getSignedJsonWebToken();
 
 const EXPRESS_SERVER = express();
+EXPRESS_SERVER.use(express.json());
 EXPRESS_SERVER.post('/event_handler', async function (req, res, next) {
   const event = req.header('X-GitHub-Event');
   switch(event) {
@@ -111,6 +112,5 @@ EXPRESS_SERVER.post('/event_handler', async function (req, res, next) {
     res.end('OK');
 });
 
-EXPRESS_SERVER.use(express.json());
 const PORT = 3000;
 EXPRESS_SERVER.listen(PORT, () => log.info(`Listening on port ${PORT}!`));
