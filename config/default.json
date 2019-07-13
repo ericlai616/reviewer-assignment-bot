@@ -1,0 +1,11 @@
+{
+  "reviewers": [
+    "ericlai616"
+  ],
+  "num-of-reviewers-required": 1,
+  "app" : {
+    "id": 0,
+    "private-key-path": "private-key.pem",
+    "base-url": "https://github.com/api/v3"
+  }
+}
