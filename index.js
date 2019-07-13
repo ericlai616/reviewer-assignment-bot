@@ -60,7 +60,7 @@ EXPRESS_SERVER.post('/event_handler', async function (req, res, next) {
           pull_number: pullRequest.number
         });
         const currentReviewedReviewers = currentReviewedReviewersResponse.data;
-        const currentReviewedReviewerLogins = currentReviewedReviewers.users != null ? current_reviewers.users.map(x => x.login) : [];
+        const currentReviewedReviewerLogins = currentReviewedReviewers.users != null ? currentReviewedReviewers.users.map(x => x.login) : [];
         log.debug(`Current reviewed reviewers: ${currentReviewedReviewerLogins}`);
 
         const currentRequestedReviewersResponse = await request("GET /repos/:owner/:repo/pulls/:pull_number/requested_reviewers", {
@@ -73,7 +73,7 @@ EXPRESS_SERVER.post('/event_handler', async function (req, res, next) {
           pull_number: pullRequest.number
         });
         const currentRequestedReviewers = currentRequestedReviewersResponse.data;
-        const currentRequestedReviewerLogins = currentRequestedReviewers.users != null ? current_reviewers.users.map(x => x.login) : [];
+        const currentRequestedReviewerLogins = currentRequestedReviewers.users != null ? currentRequestedReviewers.users.map(x => x.login) : [];
         log.debug(`Current requested reviewers: ${currentRequestedReviewerLogins}`);
 
         const nonCandidates = currentReviewedReviewerLogins.concat(currentRequestedReviewerLogins);
