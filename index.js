@@ -2,6 +2,18 @@ const { App } = require("@octokit/app");
 const { request } = require("@octokit/request");
 const shuffle = require("shuffle-array");
 const config = require('config');
+const log4js = require('log4js');
+log4js.configure({
+  appenders: {
+    out: { type: 'stdout' },
+    app: { type: 'file', filename: 'application.log' }
+  },
+  categories: {
+    default: { appenders: [ 'out', 'app' ], level: 'debug' }
+  }
+});
+var log = log4js.getLogger();
+log.level = 'debug';
 
 const fs = require("fs");
 const express = require('express');
@@ -31,7 +43,7 @@ EXPRESS_SERVER.post('/event_handler', async function (req, res, next) {
         const installationId = req.body.installation.id;
         const installationAccessToken = await GIT_HUB_APP.getInstallationAccessToken({installationId: installationId});
 
-        console.log(`PR ${pullRequest.number}`);
+        log.debug(`PR ${pullRequest.number}`);
         const current_reviewers_resp = await request("GET /repos/:owner/:repo/pulls/:pull_number/requested_reviewers", {
           baseUrl: GHE_URL,
           headers: {
@@ -42,18 +54,17 @@ EXPRESS_SERVER.post('/event_handler', async function (req, res, next) {
           pull_number: pullRequest.number
         });
         const current_reviewers = current_reviewers_resp.data;
-        console.log(`GET reviewers: ${JSON.stringify(current_reviewers)}`);
         const current_reviewer_logins = current_reviewers.users != null ? current_reviewers.users.map(x => x.login) : [];
-        console.log(`Current reviewers: ${current_reviewer_logins}`);
+        log.debug(`Current reviewers: ${current_reviewer_logins}`);
         const reviewer_candidates = reviewers.filter(x => x != pullRequest.user.login && !current_reviewer_logins.includes(x));
         const num_to_pick = NUM_OF_REVIEWERS_REQUIRED - current_reviewer_logins.length;
-        console.log(`Pick ${num_to_pick}`);
+        log.debug(`Pick ${num_to_pick}`);
         if (num_to_pick > 0) {
           let reviewers_chosen = shuffle.pick(reviewer_candidates, { picks: num_to_pick });
           if (num_to_pick == 1) {
             reviewers_chosen = [reviewers_chosen];
           }
-          console.log(`Request review to ${reviewers_chosen}`);
+          log.debug(`Request review to ${reviewers_chosen}`);
           request("POST /repos/:owner/:repo/pulls/:pull_number/requested_reviewers", {
             baseUrl: GHE_URL,
             headers: {
@@ -81,4 +92,4 @@ EXPRESS_SERVER.post('/event_handler', async function (req, res, next) {
 
 EXPRESS_SERVER.use(express.json());
 const PORT = 3000;
-EXPRESS_SERVER.listen(PORT, () => console.log(`Listening on port ${PORT}!`));
+EXPRESS_SERVER.listen(PORT, () => log.info(`Listening on port ${PORT}!`));
