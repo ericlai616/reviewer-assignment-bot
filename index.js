@@ -44,7 +44,7 @@ EXPRESS_SERVER.post('/event_handler', async function (req, res, next) {
         const installationAccessToken = await GIT_HUB_APP.getInstallationAccessToken({installationId: installationId});
 
         log.debug(`PR ${pullRequest.number}`);
-        const current_reviewed_reviewers_resp = await request("GET /repos/:owner/:repo/pulls/:pull_number/reviews", {
+        const currentReviewedReviewersResponse = await request("GET /repos/:owner/:repo/pulls/:pull_number/reviews", {
           baseUrl: GHE_URL,
           headers: {
             authorization: `token ${installationAccessToken}`,
@@ -53,11 +53,11 @@ EXPRESS_SERVER.post('/event_handler', async function (req, res, next) {
           repo: pullRequest.head.repo.name,
           pull_number: pullRequest.number
         });
-        const current_reviewed_reviewers = current_reviewed_reviewers_resp.data;
-        const current_reviewed_reviewer_logins = current_reviewed_reviewers.users != null ? current_reviewers.users.map(x => x.login) : [];
-        log.debug(`Current reviewed reviewers: ${current_reviewed_reviewer_logins}`);
+        const currentReviewedReviewers = currentReviewedReviewersResponse.data;
+        const currentReviewedReviewerLogins = currentReviewedReviewers.users != null ? current_reviewers.users.map(x => x.login) : [];
+        log.debug(`Current reviewed reviewers: ${currentReviewedReviewerLogins}`);
 
-        const current_requested_reviewers_resp = await request("GET /repos/:owner/:repo/pulls/:pull_number/requested_reviewers", {
+        const currentRequestedReviewersResponse = await request("GET /repos/:owner/:repo/pulls/:pull_number/requested_reviewers", {
           baseUrl: GHE_URL,
           headers: {
             authorization: `token ${installationAccessToken}`,
@@ -66,20 +66,20 @@ EXPRESS_SERVER.post('/event_handler', async function (req, res, next) {
           repo: pullRequest.head.repo.name,
           pull_number: pullRequest.number
         });
-        const current_requested_reviewers = current_requested_reviewers_resp.data;
-        const current_requested_reviewer_logins = current_requested_reviewers.users != null ? current_reviewers.users.map(x => x.login) : [];
-        log.debug(`Current requested reviewers: ${current_requested_reviewer_logins}`);
+        const currentRequestedReviewers = currentRequestedReviewersResponse.data;
+        const currentRequestedReviewerLogins = currentRequestedReviewers.users != null ? current_reviewers.users.map(x => x.login) : [];
+        log.debug(`Current requested reviewers: ${currentRequestedReviewerLogins}`);
 
-        const non_candidates = current_reviewed_reviewer_logins.concat(current_requested_reviewer_logins);
-        const reviewer_candidates = reviewers.filter(x => x != pullRequest.user.login && !non_candidates.includes(x));
-        const num_to_pick = NUM_OF_REVIEWERS_REQUIRED - current_requested_reviewer_logins.length;
-        log.debug(`Pick ${num_to_pick}`);
-        if (num_to_pick > 0) {
-          let reviewers_chosen = shuffle.pick(reviewer_candidates, { picks: num_to_pick });
-          if (num_to_pick == 1) {
-            reviewers_chosen = [reviewers_chosen];
+        const nonCandidates = currentReviewedReviewerLogins.concat(currentRequestedReviewerLogins);
+        const reviewerCandidates = reviewers.filter(x => x != pullRequest.user.login && !nonCandidates.includes(x));
+        const numOfReviewerToChoose = NUM_OF_REVIEWERS_REQUIRED - currentRequestedReviewerLogins.length;
+        log.debug(`Choose ${numOfReviewerToChoose} reviewer(s)`);
+        if (numOfReviewerToChoose > 0) {
+          let reviewersChosen = shuffle.pick(reviewerCandidates, { picks: numOfReviewerToChoose });
+          if (numOfReviewerToChoose == 1) {
+            reviewersChosen = [reviewersChosen];
           }
-          log.debug(`Request review to ${reviewers_chosen}`);
+          log.debug(`Request review to ${reviewersChosen}`);
           request("POST /repos/:owner/:repo/pulls/:pull_number/requested_reviewers", {
             baseUrl: GHE_URL,
             headers: {
@@ -88,7 +88,7 @@ EXPRESS_SERVER.post('/event_handler', async function (req, res, next) {
             owner: pullRequest.head.repo.owner.login,
             repo: pullRequest.head.repo.name,
             pull_number: pullRequest.number,
-            reviewers: reviewers_chosen
+            reviewers: reviewersChosen
           });
         }
       }
