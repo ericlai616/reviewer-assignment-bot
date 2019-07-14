@@ -3,6 +3,7 @@
     "ericlai616"
   ],
   "num-of-reviewers-required": 1,
+  "target-label": "Please REVIEW!!",
   "app" : {
     "id": 0,
     "private-key-path": "private-key.pem",

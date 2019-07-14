@@ -26,6 +26,7 @@ const express = require('express');
 
 var reviewers = config.get('reviewers');
 const NUM_OF_REVIEWERS_REQUIRED = config.get('num-of-reviewers-required');
+const TARGET_LABEL = config.get('target-label');
 const GHE_URL = config.get('app')['base-url'];
 
 const GIT_HUB_APP = new App({
@@ -43,7 +44,7 @@ EXPRESS_SERVER.post('/event_handler', async function (req, res, next) {
   const event = req.header('X-GitHub-Event');
   switch(event) {
     case 'pull_request':
-      if (req.body.action != 'labeled' || req.body.label.name != 'Please REVIEW!!') {
+      if (req.body.action != 'labeled' || req.body.label.name != TARGET_LABEL) {
         log.debug("Not 'Please REVIEW!!'");
         break;
       }
