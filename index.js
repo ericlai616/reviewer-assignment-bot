@@ -35,6 +35,8 @@ const GIT_HUB_APP = new App({
 });
 const JWT = GIT_HUB_APP.getSignedJsonWebToken();
 
+const GIT_HUB_REQUEST_WITH_BASE_URL = request.defaults({baseUrl: GHE_URL});
+
 const EXPRESS_SERVER = express();
 EXPRESS_SERVER.use(express.json());
 EXPRESS_SERVER.post('/event_handler', async function (req, res, next) {
@@ -49,10 +51,7 @@ EXPRESS_SERVER.post('/event_handler', async function (req, res, next) {
         }
         const installationId = req.body.installation.id;
         const installationAccessToken = await GIT_HUB_APP.getInstallationAccessToken({installationId: installationId});
-
-        log.debug(`PR ${pullRequest.number}`);
-        const currentReviewedReviewersResponse = await request("GET /repos/:owner/:repo/pulls/:pull_number/reviews", {
-          baseUrl: GHE_URL,
+        const requestWithAuthAndPrInfo = GIT_HUB_REQUEST_WITH_BASE_URL.defaults({
           headers: {
             authorization: `token ${installationAccessToken}`,
           },
@@ -60,19 +59,14 @@ EXPRESS_SERVER.post('/event_handler', async function (req, res, next) {
           repo: pullRequest.head.repo.name,
           pull_number: pullRequest.number
         });
+
+        log.debug(`PR ${pullRequest.number}`);
+        const currentReviewedReviewersResponse = await requestWithAuthAndPrInfo("GET /repos/:owner/:repo/pulls/:pull_number/reviews");
         const currentReviewedReviewers = currentReviewedReviewersResponse.data;
         const currentReviewedReviewerLogins = currentReviewedReviewers.users != null ? currentReviewedReviewers.users.map(x => x.login) : [];
         log.debug(`Current reviewed reviewers: ${currentReviewedReviewerLogins}`);
 
-        const currentRequestedReviewersResponse = await request("GET /repos/:owner/:repo/pulls/:pull_number/requested_reviewers", {
-          baseUrl: GHE_URL,
-          headers: {
-            authorization: `token ${installationAccessToken}`,
-          },
-          owner: pullRequest.head.repo.owner.login,
-          repo: pullRequest.head.repo.name,
-          pull_number: pullRequest.number
-        });
+        const currentRequestedReviewersResponse = await requestWithAuthAndPrInfo("GET /repos/:owner/:repo/pulls/:pull_number/requested_reviewers");
         const currentRequestedReviewers = currentRequestedReviewersResponse.data;
         const currentRequestedReviewerLogins = currentRequestedReviewers.users != null ? currentRequestedReviewers.users.map(x => x.login) : [];
         log.debug(`Current requested reviewers: ${currentRequestedReviewerLogins}`);
@@ -87,16 +81,7 @@ EXPRESS_SERVER.post('/event_handler', async function (req, res, next) {
             reviewersChosen = [reviewersChosen];
           }
           log.debug(`Request review to ${reviewersChosen}`);
-          request("POST /repos/:owner/:repo/pulls/:pull_number/requested_reviewers", {
-            baseUrl: GHE_URL,
-            headers: {
-              authorization: `token ${installationAccessToken}`,
-            },
-            owner: pullRequest.head.repo.owner.login,
-            repo: pullRequest.head.repo.name,
-            pull_number: pullRequest.number,
-            reviewers: reviewersChosen
-          });
+          requestWithAuthAndPrInfo("POST /repos/:owner/:repo/pulls/:pull_number/requested_reviewers", {reviewers: reviewersChosen});
         }
       }
       break;
