@@ -43,47 +43,47 @@ EXPRESS_SERVER.post('/event_handler', async function (req, res, next) {
   const event = req.header('X-GitHub-Event');
   switch(event) {
     case 'pull_request':
-      const action = req.body.action;
-      if (['opened', 'reopened', 'labeled', 'unlabeled'].includes(action)) {
-        const pullRequest = req.body.pull_request;
-        if (pullRequest.labels != null && pullRequest.labels.map(l => l.name).includes('wip')) {
-          break;
-        }
-        const installationId = req.body.installation.id;
-        const installationAccessToken = await GIT_HUB_APP.getInstallationAccessToken({installationId: installationId});
-        const requestWithAuthAndPrInfo = GIT_HUB_REQUEST_WITH_BASE_URL.defaults({
-          headers: {
-            authorization: `token ${installationAccessToken}`,
-          },
-          owner: pullRequest.head.repo.owner.login,
-          repo: pullRequest.head.repo.name,
-          pull_number: pullRequest.number
-        });
-
-        log.debug(`PR ${pullRequest.number}`);
-        requestWithAuthAndPrInfo("GET /repos/:owner/:repo/pulls/:pull_number/reviews").then(result => {
-          const currentReviewedReviewerLogins = result.data.users != null ? result.data.users.map(x => x.login) : [];
-          log.debug(`Current reviewed reviewers: ${currentReviewedReviewerLogins}`);
-
-          requestWithAuthAndPrInfo("GET /repos/:owner/:repo/pulls/:pull_number/requested_reviewers").then(result => {
-            const currentRequestedReviewerLogins = result.data.users != null ? result.data.users.map(x => x.login) : [];
-            log.debug(`Current requested reviewers: ${currentRequestedReviewerLogins}`);
-
-            const nonCandidates = currentReviewedReviewerLogins.concat(currentRequestedReviewerLogins);
-            const reviewerCandidates = reviewers.filter(x => x != pullRequest.user.login && !nonCandidates.includes(x));
-            const numOfReviewerToChoose = NUM_OF_REVIEWERS_REQUIRED - currentRequestedReviewerLogins.length;
-            log.debug(`Choose ${numOfReviewerToChoose} reviewer(s)`);
-            if (numOfReviewerToChoose > 0) {
-              let reviewersChosen = shuffle.pick(reviewerCandidates, { picks: numOfReviewerToChoose });
-              if (numOfReviewerToChoose == 1) {
-                reviewersChosen = [reviewersChosen];
-              }
-              log.debug(`Request review to ${reviewersChosen}`);
-              requestWithAuthAndPrInfo("POST /repos/:owner/:repo/pulls/:pull_number/requested_reviewers", {reviewers: reviewersChosen});
-            }
-          });
-        });
+      if (req.body.action != 'labeled' || req.body.label.name != 'Please REVIEW!!') {
+        log.debug("Not 'Please REVIEW!!'");
+        break;
       }
+
+      const pullRequest = req.body.pull_request;
+
+      const installationId = req.body.installation.id;
+      const installationAccessToken = await GIT_HUB_APP.getInstallationAccessToken({installationId: installationId});
+      const requestWithAuthAndPrInfo = GIT_HUB_REQUEST_WITH_BASE_URL.defaults({
+        headers: {
+          authorization: `token ${installationAccessToken}`,
+        },
+        owner: pullRequest.head.repo.owner.login,
+        repo: pullRequest.head.repo.name,
+        pull_number: pullRequest.number
+      });
+
+      log.debug(`PR ${pullRequest.number}`);
+      requestWithAuthAndPrInfo("GET /repos/:owner/:repo/pulls/:pull_number/reviews").then(result => {
+        const currentReviewedReviewerLogins = result.data.users != null ? result.data.users.map(x => x.login) : [];
+        log.debug(`Current reviewed reviewers: ${currentReviewedReviewerLogins}`);
+
+        requestWithAuthAndPrInfo("GET /repos/:owner/:repo/pulls/:pull_number/requested_reviewers").then(result => {
+          const currentRequestedReviewerLogins = result.data.users != null ? result.data.users.map(x => x.login) : [];
+          log.debug(`Current requested reviewers: ${currentRequestedReviewerLogins}`);
+
+          const nonCandidates = currentReviewedReviewerLogins.concat(currentRequestedReviewerLogins);
+          const reviewerCandidates = reviewers.filter(x => x != pullRequest.user.login && !nonCandidates.includes(x));
+          const numOfReviewerToChoose = NUM_OF_REVIEWERS_REQUIRED - currentRequestedReviewerLogins.length;
+          log.debug(`Choose ${numOfReviewerToChoose} reviewer(s)`);
+          if (numOfReviewerToChoose > 0) {
+            let reviewersChosen = shuffle.pick(reviewerCandidates, { picks: numOfReviewerToChoose });
+            if (numOfReviewerToChoose == 1) {
+              reviewersChosen = [reviewersChosen];
+            }
+            log.debug(`Request review to ${reviewersChosen}`);
+            requestWithAuthAndPrInfo("POST /repos/:owner/:repo/pulls/:pull_number/requested_reviewers", {reviewers: reviewersChosen});
+          }
+        });
+      });
       break;
     default:
   }
