@@ -61,28 +61,28 @@ EXPRESS_SERVER.post('/event_handler', async function (req, res, next) {
         });
 
         log.debug(`PR ${pullRequest.number}`);
-        const currentReviewedReviewersResponse = await requestWithAuthAndPrInfo("GET /repos/:owner/:repo/pulls/:pull_number/reviews");
-        const currentReviewedReviewers = currentReviewedReviewersResponse.data;
-        const currentReviewedReviewerLogins = currentReviewedReviewers.users != null ? currentReviewedReviewers.users.map(x => x.login) : [];
-        log.debug(`Current reviewed reviewers: ${currentReviewedReviewerLogins}`);
+        requestWithAuthAndPrInfo("GET /repos/:owner/:repo/pulls/:pull_number/reviews").then(result => {
+          const currentReviewedReviewerLogins = result.data.users != null ? result.data.users.map(x => x.login) : [];
+          log.debug(`Current reviewed reviewers: ${currentReviewedReviewerLogins}`);
 
-        const currentRequestedReviewersResponse = await requestWithAuthAndPrInfo("GET /repos/:owner/:repo/pulls/:pull_number/requested_reviewers");
-        const currentRequestedReviewers = currentRequestedReviewersResponse.data;
-        const currentRequestedReviewerLogins = currentRequestedReviewers.users != null ? currentRequestedReviewers.users.map(x => x.login) : [];
-        log.debug(`Current requested reviewers: ${currentRequestedReviewerLogins}`);
+          requestWithAuthAndPrInfo("GET /repos/:owner/:repo/pulls/:pull_number/requested_reviewers").then(result => {
+            const currentRequestedReviewerLogins = result.data.users != null ? result.data.users.map(x => x.login) : [];
+            log.debug(`Current requested reviewers: ${currentRequestedReviewerLogins}`);
 
-        const nonCandidates = currentReviewedReviewerLogins.concat(currentRequestedReviewerLogins);
-        const reviewerCandidates = reviewers.filter(x => x != pullRequest.user.login && !nonCandidates.includes(x));
-        const numOfReviewerToChoose = NUM_OF_REVIEWERS_REQUIRED - currentRequestedReviewerLogins.length;
-        log.debug(`Choose ${numOfReviewerToChoose} reviewer(s)`);
-        if (numOfReviewerToChoose > 0) {
-          let reviewersChosen = shuffle.pick(reviewerCandidates, { picks: numOfReviewerToChoose });
-          if (numOfReviewerToChoose == 1) {
-            reviewersChosen = [reviewersChosen];
-          }
-          log.debug(`Request review to ${reviewersChosen}`);
-          requestWithAuthAndPrInfo("POST /repos/:owner/:repo/pulls/:pull_number/requested_reviewers", {reviewers: reviewersChosen});
-        }
+            const nonCandidates = currentReviewedReviewerLogins.concat(currentRequestedReviewerLogins);
+            const reviewerCandidates = reviewers.filter(x => x != pullRequest.user.login && !nonCandidates.includes(x));
+            const numOfReviewerToChoose = NUM_OF_REVIEWERS_REQUIRED - currentRequestedReviewerLogins.length;
+            log.debug(`Choose ${numOfReviewerToChoose} reviewer(s)`);
+            if (numOfReviewerToChoose > 0) {
+              let reviewersChosen = shuffle.pick(reviewerCandidates, { picks: numOfReviewerToChoose });
+              if (numOfReviewerToChoose == 1) {
+                reviewersChosen = [reviewersChosen];
+              }
+              log.debug(`Request review to ${reviewersChosen}`);
+              requestWithAuthAndPrInfo("POST /repos/:owner/:repo/pulls/:pull_number/requested_reviewers", {reviewers: reviewersChosen});
+            }
+          });
+        });
       }
       break;
     default:
