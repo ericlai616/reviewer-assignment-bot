@@ -81,10 +81,12 @@ EXPRESS_SERVER.post('/event_handler', async function (req, res, next) {
               reviewersChosen = [reviewersChosen];
             }
             log.debug(`Request review to ${reviewersChosen}`);
-            requestWithAuthAndPrInfo("POST /repos/:owner/:repo/pulls/:pull_number/requested_reviewers", {reviewers: reviewersChosen});
+            requestWithAuthAndPrInfo("POST /repos/:owner/:repo/pulls/:pull_number/requested_reviewers", {reviewers: reviewersChosen}).catch(next);
           }
-        });
-      });
+        })
+        .catch(next);
+      })
+      .catch(next);
       break;
     default:
   }
@@ -96,6 +98,13 @@ EXPRESS_SERVER.post('/event_handler', async function (req, res, next) {
 .post('/reviewers', function (req, res, next) {
     reviewers = req.body.reviewers;
     res.end('OK');
+});
+EXPRESS_SERVER.use((err, req, res, next) => {
+  if (res.headersSent) {
+    return next(err);
+  }
+  log.error(err);
+  res.status(500).end(err.toString());
 });
 
 const PORT = 3000;
