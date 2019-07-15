@@ -40,7 +40,7 @@ const GIT_HUB_REQUEST_WITH_BASE_URL = request.defaults({baseUrl: GHE_URL});
 
 const EXPRESS_SERVER = express();
 EXPRESS_SERVER.use(express.json());
-EXPRESS_SERVER.post('/event_handler', async function (req, res, next) {
+EXPRESS_SERVER.post('/event_handler', async (req, res, next) => {
   const event = req.header('X-GitHub-Event');
   switch(event) {
     case 'pull_request':
@@ -92,12 +92,10 @@ EXPRESS_SERVER.post('/event_handler', async function (req, res, next) {
   }
   res.end('OK');
 })
-.get('/reviewers', function (req, res, next) {
-    res.end(JSON.stringify(reviewers));
-})
-.post('/reviewers', function (req, res, next) {
-    reviewers = req.body.reviewers;
-    res.end('OK');
+.get('/reviewers', (req, res, next) => res.end(JSON.stringify(reviewers)))
+.post('/reviewers', (req, res, next) => {
+  reviewers = req.body.reviewers;
+  res.end('OK');
 });
 EXPRESS_SERVER.use((err, req, res, next) => {
   if (res.headersSent) {
