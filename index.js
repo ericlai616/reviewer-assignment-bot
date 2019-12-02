@@ -82,6 +82,7 @@ EXPRESS_SERVER.post('/event_handler', async (req, res, next) => {
             }
             log.debug(`Request review to ${reviewersChosen}`);
             requestWithAuthAndPrInfo("POST /repos/:owner/:repo/pulls/:pull_number/requested_reviewers", {reviewers: reviewersChosen}).catch(next);
+            requestWithAuthAndPrInfo("POST /repos/:owner/:repo/issues/:pull_number/assignees", {assignees: [pullRequest.user.login]}).catch(next);
           }
         })
         .catch(next);
