@@ -1,4 +1,9 @@
 *.pem
-application.log
 package-lock.json
 node_modules/**
+
+# log
+application.log
+
+# config
+config/*
