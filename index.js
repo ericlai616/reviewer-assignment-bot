@@ -15,7 +15,7 @@ log4js.configure({
     }
   },
   categories: {
-    default: { appenders: [ 'out', 'app' ], level: 'debug' }
+    default: { appenders: [ 'out', 'app' ], level: 'info' }
   }
 });
 var log = log4js.getLogger();
