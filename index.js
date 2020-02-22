@@ -24,14 +24,13 @@ log.level = 'debug';
 const fs = require("fs");
 const express = require('express');
 
-var reviewers = config.get('reviewers');
-const NUM_OF_REVIEWERS_REQUIRED = config.get('num-of-reviewers-required');
-const TARGET_LABEL = config.get('target-label');
-const GHE_URL = config.get('app')['base-url'];
+const appConfig = config.get('app');
+var labelConfig = config.get('labels');
+const GHE_URL = appConfig.get('baseUrl');
 
 const GIT_HUB_APP = new App({
-  id: config.get('app')['id'],
-  privateKey: fs.readFileSync(config.get('app')['private-key-path']),
+  id: appConfig.get('id'),
+  privateKey: fs.readFileSync(appConfig.get('privateKeyPath')),
   baseUrl: GHE_URL
 });
 const JWT = GIT_HUB_APP.getSignedJsonWebToken();
@@ -44,13 +43,16 @@ EXPRESS_SERVER.post('/event_handler', async (req, res, next) => {
   const event = req.header('X-GitHub-Event');
   switch(event) {
     case 'pull_request':
-      if (req.body.action != 'labeled' || req.body.label.name != TARGET_LABEL) {
-        log.debug("Not 'Please REVIEW!!'");
+      if (req.body.action != 'labeled') {
+        log.debug('Skip non labeled actions');
+        break;
+      }
+      if (!labelConfig.has(req.body.label.name)) {
+        log.debug('No action for label ' + req.body.label.name);
         break;
       }
 
       const pullRequest = req.body.pull_request;
-
       const installationId = req.body.installation.id;
       const installationAccessToken = await GIT_HUB_APP.getInstallationAccessToken({installationId: installationId});
       const requestWithAuthAndPrInfo = GIT_HUB_REQUEST_WITH_BASE_URL.defaults({
@@ -71,9 +73,12 @@ EXPRESS_SERVER.post('/event_handler', async (req, res, next) => {
           const currentRequestedReviewerLogins = result.data.users != null ? result.data.users.map(x => x.login) : [];
           log.debug(`Current requested reviewers: ${currentRequestedReviewerLogins}`);
 
+          const currentLabelConfig = labelConfig.get(req.body.label.name);
+          log.debug(`Load label config: ${JSON.stringify(currentLabelConfig)}`);
           const nonCandidates = currentReviewedReviewerLogins.concat(currentRequestedReviewerLogins);
+          const reviewers = currentLabelConfig.reviewers;
           const reviewerCandidates = reviewers.filter(x => x != pullRequest.user.login && !nonCandidates.includes(x));
-          const numOfReviewerToChoose = NUM_OF_REVIEWERS_REQUIRED - currentRequestedReviewerLogins.length;
+          const numOfReviewerToChoose = currentLabelConfig.has('number-of-reviewers') ? currentLabelConfig.get('number-of-reviewers') : reviewerCandidates.length;
           log.debug(`Choose ${numOfReviewerToChoose} reviewer(s)`);
           if (numOfReviewerToChoose > 0) {
             let reviewersChosen = shuffle.pick(reviewerCandidates, { picks: numOfReviewerToChoose });
@@ -82,7 +87,6 @@ EXPRESS_SERVER.post('/event_handler', async (req, res, next) => {
             }
             log.debug(`Request review to ${reviewersChosen}`);
             requestWithAuthAndPrInfo("POST /repos/:owner/:repo/pulls/:pull_number/requested_reviewers", {reviewers: reviewersChosen}).catch(next);
-            requestWithAuthAndPrInfo("POST /repos/:owner/:repo/issues/:pull_number/assignees", {assignees: [pullRequest.user.login]}).catch(next);
           }
         })
         .catch(next);
@@ -93,11 +97,7 @@ EXPRESS_SERVER.post('/event_handler', async (req, res, next) => {
   }
   res.end('OK');
 })
-.get('/reviewers', (req, res, next) => res.end(JSON.stringify(reviewers)))
-.post('/reviewers', (req, res, next) => {
-  reviewers = req.body.reviewers;
-  res.end('OK');
-});
+.get('/config', (req, res, next) => res.end(JSON.stringify(labelConfig)))
 EXPRESS_SERVER.use((err, req, res, next) => {
   if (res.headersSent) {
     return next(err);
