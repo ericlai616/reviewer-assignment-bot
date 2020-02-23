@@ -12,6 +12,7 @@
   "dependencies": {
     "@octokit/auth-app": "^2.4.3",
     "@octokit/request": "^5.0.1",
+    "@octokit/webhooks": "^7.1.0",
     "config": "^3.2.0",
     "express": "^4.17.1",
     "fs": "0.0.1-security",
