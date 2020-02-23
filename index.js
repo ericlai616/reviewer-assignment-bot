@@ -26,7 +26,7 @@ const express = require('express');
 
 const appConfig = config.get('app');
 var labelConfig = config.get('labels');
-const GHE_URL = appConfig.get('baseUrl');
+const GHE_URL = appConfig.get('base-url');
 const APP_PRIVATE_KEY = fs.readFileSync(appConfig.get('privateKeyPath'));
 const API_REQUEST = request.defaults({baseUrl: GHE_URL});
 
