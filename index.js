@@ -71,31 +71,29 @@ webhooks.on('pull_request', async ({ id, name, payload }) => {
   });
 
   log.debug(`PR ${pullRequest.number}`);
-  requestWithAuthAndPrInfo("GET /repos/:owner/:repo/pulls/:pull_number/reviews").then(result => {
-    const currentReviewedReviewerLogins = result.data.users != null ? result.data.users.map(x => x.login) : [];
-    log.debug(`Current reviewed reviewers: ${currentReviewedReviewerLogins}`);
+  const { users : currentReviewedReviewers } = await requestWithAuthAndPrInfo("GET /repos/:owner/:repo/pulls/:pull_number/reviews");
+  const currentReviewedReviewerLogins = currentReviewedReviewers != null ? currentReviewedReviewers.map(x => x.login) : [];
+  log.debug(`Current reviewed reviewers: ${currentReviewedReviewerLogins}`);
 
-    requestWithAuthAndPrInfo("GET /repos/:owner/:repo/pulls/:pull_number/requested_reviewers").then(result => {
-      const currentRequestedReviewerLogins = result.data.users != null ? result.data.users.map(x => x.login) : [];
-      log.debug(`Current requested reviewers: ${currentRequestedReviewerLogins}`);
+  const { users : requestedReviewers } = await requestWithAuthAndPrInfo("GET /repos/:owner/:repo/pulls/:pull_number/requested_reviewers")
+  const currentRequestedReviewerLogins = requestedReviewers != null ? requestedReviewers.map(x => x.login) : [];
+  log.debug(`Current requested reviewers: ${currentRequestedReviewerLogins}`);
 
-      const currentLabelConfig = labelConfig.get(labelName);
-      log.debug(`Load label config: ${JSON.stringify(currentLabelConfig)}`);
-      const nonCandidates = currentReviewedReviewerLogins.concat(currentRequestedReviewerLogins);
-      const reviewers = currentLabelConfig.reviewers;
-      const reviewerCandidates = reviewers.filter(x => x != pullRequest.user.login && !nonCandidates.includes(x));
-      const numOfReviewerToChoose = currentLabelConfig.has('number-of-reviewers') ? currentLabelConfig.get('number-of-reviewers') : reviewerCandidates.length;
-      log.debug(`Choose ${numOfReviewerToChoose} reviewer(s)`);
-      if (numOfReviewerToChoose > 0) {
-        let reviewersChosen = shuffle.pick(reviewerCandidates, { picks: numOfReviewerToChoose });
-        if (numOfReviewerToChoose == 1) {
-          reviewersChosen = [reviewersChosen];
-        }
-        log.debug(`Request review to ${reviewersChosen}`);
-        requestWithAuthAndPrInfo("POST /repos/:owner/:repo/pulls/:pull_number/requested_reviewers", {reviewers: reviewersChosen});
-      }
-    })
-  })
+  const currentLabelConfig = labelConfig.get(labelName);
+  log.debug(`Load label config: ${JSON.stringify(currentLabelConfig)}`);
+  const nonCandidates = currentReviewedReviewerLogins.concat(currentRequestedReviewerLogins);
+  const reviewers = currentLabelConfig.reviewers;
+  const reviewerCandidates = reviewers.filter(x => x != pullRequest.user.login && !nonCandidates.includes(x));
+  const numOfReviewerToChoose = currentLabelConfig.has('number-of-reviewers') ? currentLabelConfig.get('number-of-reviewers') : reviewerCandidates.length;
+  log.debug(`Choose ${numOfReviewerToChoose} reviewer(s)`);
+  if (numOfReviewerToChoose > 0) {
+    let reviewersChosen = shuffle.pick(reviewerCandidates, { picks: numOfReviewerToChoose });
+    if (numOfReviewerToChoose == 1) {
+      reviewersChosen = [reviewersChosen];
+    }
+    log.debug(`Request review to ${reviewersChosen}`);
+    requestWithAuthAndPrInfo("POST /repos/:owner/:repo/pulls/:pull_number/requested_reviewers", {reviewers: reviewersChosen});
+  }
 })
 const EXPRESS_SERVER = express();
 EXPRESS_SERVER.use(express.json());
