@@ -1,4 +1,4 @@
-const { App } = require("@octokit/app");
+const { createAppAuth } = require("@octokit/auth-app");
 const { request } = require("@octokit/request");
 const shuffle = require("shuffle-array");
 const config = require('config');
@@ -27,15 +27,14 @@ const express = require('express');
 const appConfig = config.get('app');
 var labelConfig = config.get('labels');
 const GHE_URL = appConfig.get('baseUrl');
+const APP_PRIVATE_KEY = fs.readFileSync(appConfig.get('privateKeyPath'));
+const API_REQUEST = request.defaults({baseUrl: GHE_URL});
 
-const GIT_HUB_APP = new App({
+const auth = createAppAuth({
   id: appConfig.get('id'),
-  privateKey: fs.readFileSync(appConfig.get('privateKeyPath')),
-  baseUrl: GHE_URL
+  privateKey: APP_PRIVATE_KEY,
+  request: API_REQUEST
 });
-const JWT = GIT_HUB_APP.getSignedJsonWebToken();
-
-const GIT_HUB_REQUEST_WITH_BASE_URL = request.defaults({baseUrl: GHE_URL});
 
 const EXPRESS_SERVER = express();
 EXPRESS_SERVER.use(express.json());
@@ -54,10 +53,16 @@ EXPRESS_SERVER.post('/event_handler', async (req, res, next) => {
 
       const pullRequest = req.body.pull_request;
       const installationId = req.body.installation.id;
-      const installationAccessToken = await GIT_HUB_APP.getInstallationAccessToken({installationId: installationId});
-      const requestWithAuthAndPrInfo = GIT_HUB_REQUEST_WITH_BASE_URL.defaults({
+      const { token } = await auth({
+        type: "installation",
+        installationId: installationId,
+        permissions: {
+          "members": "read",
+          "pull_requests": "write"
+        }});
+      const requestWithAuthAndPrInfo = API_REQUEST.defaults({
         headers: {
-          authorization: `token ${installationAccessToken}`,
+          authorization: `token ${token}`
         },
         owner: pullRequest.head.repo.owner.login,
         repo: pullRequest.head.repo.name,
