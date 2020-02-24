@@ -3,6 +3,10 @@ const { request } = require("@octokit/request");
 const shuffle = require("shuffle-array");
 const config = require('config');
 const log4js = require('log4js');
+const fs = require("fs");
+const express = require('express');
+const WebhooksApi = require("@octokit/webhooks");
+
 log4js.configure({
   appenders: {
     out: { type: 'stdout' },
@@ -21,9 +25,6 @@ log4js.configure({
 var log = log4js.getLogger();
 log.level = 'debug';
 
-const fs = require("fs");
-const express = require('express');
-
 const appConfig = config.get('app');
 var labelConfig = config.get('labels');
 const GHE_URL = appConfig.get('base-url');
@@ -36,7 +37,6 @@ const auth = createAppAuth({
   request: API_REQUEST
 });
 
-const WebhooksApi = require("@octokit/webhooks");
 const webhooks = new WebhooksApi({
   secret: appConfig.get('secret')
 });
