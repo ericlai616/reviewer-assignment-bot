@@ -16,6 +16,8 @@ private-key-path | The file containing the private key generated from GitHub App
 secret | The secret of the GitHub App webhook
 base-url | The base URL of GitHub REST API for GitHub Enterprise support. Default: `https://github.com/api/v3`
 
+`log`: A configuration object for log4js. Default configuration will be the same as log4js.
+
 `labels`: Key-value pairs for configuration of triggering auto review request(s)
 The key name is the name of the trigger label to be configured.
 The value has the following schema:
