@@ -41,11 +41,7 @@ const webhooks = new WebhooksApi({
   secret: appConfig.get('secret')
 });
 
-webhooks.on('pull_request', async ({ id, name, payload }) => {
-  if (payload.action != 'labeled') {
-    log.debug('Skip non labeled actions');
-    return Promise.resolve();
-  }
+webhooks.on('pull_request.labeled', async ({ id, name, payload }) => {
   const labelName = payload.label.name;
   if (!labelConfig.has(labelName)) {
     log.debug('No action for label ' + labelName);
