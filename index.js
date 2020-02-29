@@ -44,12 +44,12 @@ const webhooks = new WebhooksApi({
 webhooks.on('pull_request', async ({ id, name, payload }) => {
   if (payload.action != 'labeled') {
     log.debug('Skip non labeled actions');
-    return;
+    return Promise.resolve();
   }
   const labelName = payload.label.name;
   if (!labelConfig.has(labelName)) {
     log.debug('No action for label ' + labelName);
-    return;
+    return Promise.resolve();
   }
 
   const pullRequest = payload.pull_request;
@@ -94,6 +94,7 @@ webhooks.on('pull_request', async ({ id, name, payload }) => {
     log.debug(`Request review to ${reviewersChosen}`);
     requestWithAuthAndPrInfo("POST /repos/:owner/:repo/pulls/:pull_number/requested_reviewers", {reviewers: reviewersChosen});
   }
+  return Promise.resolve();
 })
 const EXPRESS_SERVER = express();
 EXPRESS_SERVER.use(express.json());
