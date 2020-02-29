@@ -16,7 +16,9 @@ const appConfig = CONFIG.get('app');
 const LABEL_CONFIG = CONFIG.get('labels');
 const GHE_URL = appConfig.has('base-url') ? appConfig.get('base-url') : 'https://github.com/api/v3';
 log.debug('Setting GitHub REST API endpoint:', GHE_URL);
-const APP_PRIVATE_KEY = FS.readFileSync(appConfig.get('private-key-path'));
+const PRIVATE_KEY_PATH = appConfig.has('private-key-path') ? appConfig.get('private-key-path') : 'private-key.pem';
+log.debug('Loading private key:', PRIVATE_KEY_PATH);
+const APP_PRIVATE_KEY = FS.readFileSync(PRIVATE_KEY_PATH);
 const API_REQUEST = request.defaults({baseUrl: GHE_URL});
 
 const auth = createAppAuth({
