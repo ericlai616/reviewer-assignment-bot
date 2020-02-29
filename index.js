@@ -14,7 +14,8 @@ var log = LOG4JS.getLogger();
 
 const appConfig = CONFIG.get('app');
 const LABEL_CONFIG = CONFIG.get('labels');
-const GHE_URL = appConfig.get('base-url');
+const GHE_URL = appConfig.has('base-url') ? appConfig.get('base-url') : 'https://github.com/api/v3';
+log.debug('Setting GitHub REST API endpoint:', GHE_URL);
 const APP_PRIVATE_KEY = FS.readFileSync(appConfig.get('private-key-path'));
 const API_REQUEST = request.defaults({baseUrl: GHE_URL});
 
