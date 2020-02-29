@@ -1,13 +1,13 @@
 const { createAppAuth } = require("@octokit/auth-app");
 const { request } = require("@octokit/request");
-const shuffle = require("shuffle-array");
-const config = require('config');
-const log4js = require('log4js');
-const fs = require("fs");
+const SHUFFLE = require("shuffle-array");
+const CONFIG = require('config');
+const LOG4JS = require('log4js');
+const FS = require("fs");
 const express = require('express');
 const WebhooksApi = require("@octokit/webhooks");
 
-log4js.configure({
+LOG4JS.configure({
   appenders: {
     out: { type: 'stdout' },
     app: {
@@ -22,13 +22,13 @@ log4js.configure({
     default: { appenders: [ 'out', 'app' ], level: 'info' }
   }
 });
-var log = log4js.getLogger();
+var log = LOG4JS.getLogger();
 log.level = 'debug';
 
-const appConfig = config.get('app');
-const LABEL_CONFIG = config.get('labels');
+const appConfig = CONFIG.get('app');
+const LABEL_CONFIG = CONFIG.get('labels');
 const GHE_URL = appConfig.get('base-url');
-const APP_PRIVATE_KEY = fs.readFileSync(appConfig.get('private-key-path'));
+const APP_PRIVATE_KEY = FS.readFileSync(appConfig.get('private-key-path'));
 const API_REQUEST = request.defaults({baseUrl: GHE_URL});
 
 const auth = createAppAuth({
@@ -83,7 +83,7 @@ webhooks.on('pull_request.labeled', async ({ id, name, payload }) => {
   const numOfReviewerToChoose = currentLabelConfig.has('number-of-reviewers') ? currentLabelConfig.get('number-of-reviewers') : reviewerCandidates.length;
   log.debug(`Choose ${numOfReviewerToChoose} reviewer(s)`);
   if (numOfReviewerToChoose > 0) {
-    let reviewersChosen = shuffle.pick(reviewerCandidates, { picks: numOfReviewerToChoose });
+    let reviewersChosen = SHUFFLE.pick(reviewerCandidates, { picks: numOfReviewerToChoose });
     if (numOfReviewerToChoose == 1) {
       reviewersChosen = [reviewersChosen];
     }
