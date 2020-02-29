@@ -13,6 +13,7 @@ Config | Description
 ----- | -----
 id | ID of GitHub App
 private-key-path | The file containing the private key generated from GitHub App. Default: `private-key.pem`
+secret | The secret of the GitHub App webhook
 base-url | The base URL of GitHub REST API for GitHub Enterprise support. Default: `https://github.com/api/v3`
 
 `labels`: Key-value pairs for configuration of triggering auto review request(s)
@@ -30,6 +31,7 @@ Example:
   "app" : {
     "id": 0,
     "private-key-path": "private-key.pem",
+    "secret": "foobar",
     "base-url": "https://github.com/api/v3"
   },
   "labels": {
