@@ -7,23 +7,10 @@ const FS = require("fs");
 const express = require('express');
 const WebhooksApi = require("@octokit/webhooks");
 
-LOG4JS.configure({
-  appenders: {
-    out: { type: 'stdout' },
-    app: {
-      type: 'file',
-      filename: 'application.log',
-      maxLogSize: 10485760,
-      backups: 10,
-      compress: true
-    }
-  },
-  categories: {
-    default: { appenders: [ 'out', 'app' ], level: 'info' }
-  }
-});
+if (CONFIG.has('log')) {
+  LOG4JS.configure(CONFIG.get('log'));
+}
 var log = LOG4JS.getLogger();
-log.level = 'debug';
 
 const appConfig = CONFIG.get('app');
 const LABEL_CONFIG = CONFIG.get('labels');
