@@ -26,7 +26,7 @@ var log = log4js.getLogger();
 log.level = 'debug';
 
 const appConfig = config.get('app');
-var labelConfig = config.get('labels');
+const LABEL_CONFIG = config.get('labels');
 const GHE_URL = appConfig.get('base-url');
 const APP_PRIVATE_KEY = fs.readFileSync(appConfig.get('private-key-path'));
 const API_REQUEST = request.defaults({baseUrl: GHE_URL});
@@ -43,7 +43,7 @@ const webhooks = new WebhooksApi({
 
 webhooks.on('pull_request.labeled', async ({ id, name, payload }) => {
   const labelName = payload.label.name;
-  if (!labelConfig.has(labelName)) {
+  if (!LABEL_CONFIG.has(labelName)) {
     log.debug('No action for label ' + labelName);
     return Promise.resolve();
   }
@@ -75,7 +75,7 @@ webhooks.on('pull_request.labeled', async ({ id, name, payload }) => {
   const currentRequestedReviewerLogins = requestedReviewers != null ? requestedReviewers.map(x => x.login) : [];
   log.debug(`Current requested reviewers: ${currentRequestedReviewerLogins}`);
 
-  const currentLabelConfig = labelConfig.get(labelName);
+  const currentLabelConfig = LABEL_CONFIG.get(labelName);
   log.debug(`Load label config: ${JSON.stringify(currentLabelConfig)}`);
   const nonCandidates = currentReviewedReviewerLogins.concat(currentRequestedReviewerLogins);
   const reviewers = currentLabelConfig.reviewers;
