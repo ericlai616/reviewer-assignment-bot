@@ -2,22 +2,17 @@ const { createAppAuth } = require("@octokit/auth-app");
 const { request } = require("@octokit/request");
 const SHUFFLE = require("shuffle-array");
 const CONFIG = require('config');
-const LOG4JS = require('log4js');
+const { LOGGER } = require("./logger.js");
 const FS = require("fs");
 const express = require('express');
 const WebhooksApi = require("@octokit/webhooks");
 
-if (CONFIG.has('log')) {
-  LOG4JS.configure(CONFIG.get('log'));
-}
-var log = LOG4JS.getLogger();
-
 const APP_CONFIG = CONFIG.get('app');
 const LABEL_CONFIG = CONFIG.get('labels');
 const GHE_URL = APP_CONFIG.has('base-url') ? APP_CONFIG.get('base-url') : 'https://github.com/api/v3';
-log.debug('Setting GitHub REST API endpoint:', GHE_URL);
+LOGGER.debug('Setting GitHub REST API endpoint:', GHE_URL);
 const PRIVATE_KEY_PATH = APP_CONFIG.has('private-key-path') ? APP_CONFIG.get('private-key-path') : 'private-key.pem';
-log.debug('Loading private key:', PRIVATE_KEY_PATH);
+LOGGER.debug('Loading private key:', PRIVATE_KEY_PATH);
 const APP_PRIVATE_KEY = FS.readFileSync(PRIVATE_KEY_PATH);
 const API_REQUEST = request.defaults({baseUrl: GHE_URL});
 
@@ -34,7 +29,7 @@ const webhooks = new WebhooksApi({
 webhooks.on('pull_request.labeled', async ({ id, name, payload }) => {
   const labelName = payload.label.name;
   if (!LABEL_CONFIG.has(labelName)) {
-    log.debug('No action for label ' + labelName);
+    LOGGER.debug('No action for label ' + labelName);
     return Promise.resolve();
   }
 
@@ -56,28 +51,28 @@ webhooks.on('pull_request.labeled', async ({ id, name, payload }) => {
     pull_number: pullRequest.number
   });
 
-  log.debug(`PR ${pullRequest.number}`);
+  LOGGER.debug(`PR ${pullRequest.number}`);
   const { users : currentReviewedReviewers } = await requestWithAuthAndPrInfo("GET /repos/:owner/:repo/pulls/:pull_number/reviews");
   const currentReviewedReviewerLogins = currentReviewedReviewers != null ? currentReviewedReviewers.map(x => x.login) : [];
-  log.debug(`Current reviewed reviewers: ${currentReviewedReviewerLogins}`);
+  LOGGER.debug(`Current reviewed reviewers: ${currentReviewedReviewerLogins}`);
 
   const { users : requestedReviewers } = await requestWithAuthAndPrInfo("GET /repos/:owner/:repo/pulls/:pull_number/requested_reviewers")
   const currentRequestedReviewerLogins = requestedReviewers != null ? requestedReviewers.map(x => x.login) : [];
-  log.debug(`Current requested reviewers: ${currentRequestedReviewerLogins}`);
+  LOGGER.debug(`Current requested reviewers: ${currentRequestedReviewerLogins}`);
 
   const currentLabelConfig = LABEL_CONFIG.get(labelName);
-  log.debug(`Load label config: ${JSON.stringify(currentLabelConfig)}`);
+  LOGGER.debug(`Load label config: ${JSON.stringify(currentLabelConfig)}`);
   const nonCandidates = currentReviewedReviewerLogins.concat(currentRequestedReviewerLogins);
   const reviewers = currentLabelConfig.reviewers;
   const reviewerCandidates = reviewers.filter(x => x != pullRequest.user.login && !nonCandidates.includes(x));
   const numOfReviewerToChoose = currentLabelConfig.has('number-of-reviewers') ? currentLabelConfig.get('number-of-reviewers') : reviewerCandidates.length;
-  log.debug(`Choose ${numOfReviewerToChoose} reviewer(s)`);
+  LOGGER.debug(`Choose ${numOfReviewerToChoose} reviewer(s)`);
   if (numOfReviewerToChoose > 0) {
     let reviewersChosen = SHUFFLE.pick(reviewerCandidates, { picks: numOfReviewerToChoose });
     if (numOfReviewerToChoose == 1) {
       reviewersChosen = [reviewersChosen];
     }
-    log.debug(`Request review to ${reviewersChosen}`);
+    LOGGER.debug(`Request review to ${reviewersChosen}`);
     requestWithAuthAndPrInfo("POST /repos/:owner/:repo/pulls/:pull_number/requested_reviewers", {reviewers: reviewersChosen});
   }
   return Promise.resolve();
@@ -89,9 +84,9 @@ EXPRESS_SERVER.use((err, req, res, next) => {
   if (res.headersSent) {
     return next(err);
   }
-  log.error(err);
+  LOGGER.error(err);
   res.status(500).end(err.toString());
 });
 
 const PORT = 3000;
-EXPRESS_SERVER.listen(PORT, () => log.info(`Listening on port ${PORT}!`));
+EXPRESS_SERVER.listen(PORT, () => LOGGER.info(`Listening on port ${PORT}!`));
