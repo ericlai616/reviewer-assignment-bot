@@ -1,7 +1,3 @@
-const { createAppAuth } = require("@octokit/auth-app");
-const { request } = require("@octokit/request");
-const SHUFFLE = require("shuffle-array");
-const CONFIG = require('config');
 const { LOGGER } = require("./logger.js");
 const express = require('express');
 const { WEBHOOKS } = require("./webhooks");
