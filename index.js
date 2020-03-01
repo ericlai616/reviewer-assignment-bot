@@ -12,23 +12,23 @@ if (CONFIG.has('log')) {
 }
 var log = LOG4JS.getLogger();
 
-const appConfig = CONFIG.get('app');
+const APP_CONFIG = CONFIG.get('app');
 const LABEL_CONFIG = CONFIG.get('labels');
-const GHE_URL = appConfig.has('base-url') ? appConfig.get('base-url') : 'https://github.com/api/v3';
+const GHE_URL = APP_CONFIG.has('base-url') ? APP_CONFIG.get('base-url') : 'https://github.com/api/v3';
 log.debug('Setting GitHub REST API endpoint:', GHE_URL);
-const PRIVATE_KEY_PATH = appConfig.has('private-key-path') ? appConfig.get('private-key-path') : 'private-key.pem';
+const PRIVATE_KEY_PATH = APP_CONFIG.has('private-key-path') ? APP_CONFIG.get('private-key-path') : 'private-key.pem';
 log.debug('Loading private key:', PRIVATE_KEY_PATH);
 const APP_PRIVATE_KEY = FS.readFileSync(PRIVATE_KEY_PATH);
 const API_REQUEST = request.defaults({baseUrl: GHE_URL});
 
 const auth = createAppAuth({
-  id: appConfig.get('id'),
+  id: APP_CONFIG.get('id'),
   privateKey: APP_PRIVATE_KEY,
   request: API_REQUEST
 });
 
 const webhooks = new WebhooksApi({
-  secret: appConfig.get('secret')
+  secret: APP_CONFIG.get('secret')
 });
 
 webhooks.on('pull_request.labeled', async ({ id, name, payload }) => {
