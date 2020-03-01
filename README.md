@@ -60,3 +60,19 @@ Example:
   }
 }
 ```
+
+## Docker
+
+1. Create `config/default.json` and configure values as described above
+2. Build a docker image
+```sh
+docker build -t reviewer-assignment-bot .
+```
+3. Run the image in a detached container with a port binded to container port 3000
+```sh
+docker run -p ${port}:3000 -d reviewer-assignment-bot
+```
+4. If a console logger is configured, log can be viewed by using docker log
+```sh
+docker logs ${containerId}
+```
