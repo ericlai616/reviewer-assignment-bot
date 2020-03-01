@@ -36,6 +36,19 @@ Example:
     "secret": "foobar",
     "base-url": "https://github.com/api/v3"
   },
+  "log": {
+    "appenders": {
+      "console": {
+        "type": "console"
+      }
+    },
+    "categories": {
+      "default": {
+        "appenders": [ "console" ],
+        "level": "info"
+      }
+    }
+  },
   "labels": {
     "Please REVIEW!!": {
       "reviewers": ["reviewer1", "reviewer2"]
