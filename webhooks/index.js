@@ -1,4 +1,11 @@
+const FS = require('fs');
 const { WEBHOOKS } = require('./webhooks-base.js');
-require('./pull-request-labeled-handler.js');
-require('./error-handler.js');
+const { LOGGER } = require('../logger.js');
+
+FS.readdirSync(__dirname).forEach(file => {
+  if (!['index.js', 'webhooks-base.js'].includes(file)) {
+    LOGGER.debug('Loading webhook:', file);
+    require('./' + file);
+  }
+});
 exports.WEBHOOKS = WEBHOOKS;
