@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const { LOGGER } = require("./logger.js");
 const express = require('express');
 const { WEBHOOKS } = require("./webhooks");
