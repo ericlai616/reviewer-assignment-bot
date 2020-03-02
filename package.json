@@ -1,14 +1,14 @@
 {
-  "name": "review-assignment",
+  "name": "@ericlai616/reviewer-assignment-bot",
   "version": "1.0.0",
-  "description": "",
+  "description": "A Node.js server which automatically requests for reviews when a specific label is added to a pull request. Currently only deal with users, but not teams.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Eric Lai",
+  "license": "MIT",
   "dependencies": {
     "@octokit/auth-app": "^2.4.3",
     "@octokit/request": "^5.0.1",
@@ -18,5 +18,14 @@
     "fs": "0.0.1-security",
     "log4js": "^4.5.1",
     "shuffle-array": "^1.0.1"
-  }
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ericlai616/reviewer-assignment-bot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ericlai616/reviewer-assignment-bot/issues"
+  },
+  "homepage": "https://github.com/ericlai616/reviewer-assignment-bot#readme"
 }
