@@ -15,5 +15,5 @@ EXPRESS_SERVER.use((err, req, res, next) => {
   res.status(500).end(err.toString());
 });
 
-const PORT = 3000;
-EXPRESS_SERVER.listen(PORT, () => LOGGER.info(`Listening on port ${PORT}!`));
+exports.server = EXPRESS_SERVER;
+exports.log = LOGGER;

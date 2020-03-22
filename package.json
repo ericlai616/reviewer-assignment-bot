@@ -4,7 +4,6 @@
   "description": "A Node.js server which automatically requests for reviews when a specific label is added to a pull request. Currently only deal with users, but not teams.",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -29,7 +28,4 @@
     "url": "https://github.com/ericlai616/reviewer-assignment-bot/issues"
   },
   "homepage": "https://github.com/ericlai616/reviewer-assignment-bot#readme",
-  "bin": {
-    "reviewer-assignment-bot": "./index.js"
-  }
 }
