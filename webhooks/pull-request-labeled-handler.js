@@ -54,5 +54,6 @@ WEBHOOKS.on('pull_request.labeled', async ({ id, name, payload }) => {
     LOGGER.debug(`Request review to ${reviewersChosen}`);
     requestWithAuthAndPrInfo("POST /repos/:owner/:repo/pulls/:pull_number/requested_reviewers", {reviewers: reviewersChosen});
   }
+  requestWithAuthAndPrInfo("POST /repos/:owner/:repo/issues/:pull_number/assignees", {assignees: [pullRequest.user.login]});
   return Promise.resolve();
 });
